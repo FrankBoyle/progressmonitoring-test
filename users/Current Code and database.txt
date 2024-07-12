@@ -1,0 +1,351 @@
+I have the following codes. They show a student list which can be added to. Each link should show student data and give the ability to edit or add new data entries. Editing entires works, but I can't add new entries and don't know why. Can you fix this code so I can add student entries after I click their link and go to their data site?
+
+view_student_data.php
+<?php
+// Include database connection and error reporting settings
+include('./users/db.php');
+
+// Error Reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Initialize an empty array for performanceData
+$performanceData = array();
+
+// Check if `student_id` is provided in the URL
+if (isset($_GET['student_id'])) {
+    $studentId = $_GET['student_id'];
+
+    $stmt = $connection->prepare("SELECT * FROM Performance WHERE student_id = ? ORDER BY score_date DESC LIMIT 41");
+    $stmt->execute([$studentId]);
+
+    $performanceData = $stmt->fetchAll();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Performance Data</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<input type="hidden" id="currentStudentId" value="<?php echo htmlspecialchars($studentId); ?>" />
+<input type="hidden" id="currentWeekStartDate" value="" />
+
+<script>
+$(document).ready(function() {
+
+function attachEditableHandler() {
+    $('.editable').off('click').on('click', function() {
+        const cell = $(this);
+        const originalValue = cell.text();
+        const input = $('<input type="text">');
+        input.val(originalValue);
+        cell.html(input);
+        input.focus();
+
+        input.blur(function() {
+            const newValue = input.val();
+            cell.text(newValue);
+
+            const performanceId = cell.closest('tr').data('performance-id');
+            const fieldName = cell.data('field-name');
+
+            const targetUrl = (performanceId === 'new') ? 'insert_performance.php' : 'update_performance.php';
+
+            // Fetch student ID and week start date dynamically
+            const studentId = $('#currentStudentId').val();  
+            const weekStartDate = $('#currentWeekStartDate').val();
+
+            $.ajax({
+                type: 'POST',
+                url: targetUrl,
+                data: {
+                    performance_id: performanceId,
+                    field_name: fieldName,
+                    new_value: newValue,
+                    student_id: studentId, 
+                    score_date: weekStartDate 
+                },
+                success: function(response) {
+                    if (performanceId === 'new') {
+                        // Optionally update the new row's performance-id with the ID returned from the server
+                    }
+                    alert('Data updated successfully');
+                },
+                error: function() {
+                    alert('Error updating data. Please try again later.');
+                }
+            });
+        });
+
+        // Pressing Enter to save changes
+        input.keypress(function(e) {
+            if (e.which === 13) {
+                input.blur();
+            }
+        });
+    });
+}
+
+attachEditableHandler();
+
+$('#addDataRow').click(function() {
+    const newRow = $('<tr data-performance-id="new">');
+    newRow.append('<td class="editable" data-field-name="score_date">New Entry</td>');
+    for (let i = 1; i <= 10; i++) {
+        newRow.append($('<td>').addClass('editable').attr('data-field-name', 'score' + i).text(''));
+    }
+    $('table').append(newRow);
+    attachEditableHandler();
+});
+});
+
+</script>
+
+<h1>Student Performance Data</h1>
+<button id="addDataRow">Add Data Row</button>
+
+<table border="1">
+    <tr>
+        <th class="editable" data-field-name="score_date">Week Start Date</th>
+        <th class="editable" data-field-name="score1">Score1</th>
+        <th class="editable" data-field-name="score2">Score2</th>
+        <th class="editable" data-field-name="score3">Score3</th>
+        <th class="editable" data-field-name="score4">Score4</th>
+        <th class="editable" data-field-name="score5">Score5</th>
+        <th class="editable" data-field-name="score6">Score6</th>
+        <th class="editable" data-field-name="score7">Score7</th>
+        <th class="editable" data-field-name="score8">Score8</th>
+        <th class="editable" data-field-name="score9">Score9</th>
+        <th class="editable" data-field-name="score10">Score10</th>
+
+        <!-- more headers here -->
+    </tr>
+    <?php if (empty($performanceData)) : ?>
+        <tr><td colspan="11">No Data Found. Click "Add Data Row" to add new data.</td></tr>
+    <?php else : ?>
+        <?php foreach ($performanceData as $data) : ?>
+            <tr data-performance-id="<?php echo $data['performance_id']; ?>">
+                <td class="editable" data-field-name="score_date"><?php echo $data['score_date']; ?></td>
+                <td class="editable" data-field-name="score1"><?php echo $data['score1']; ?></td>
+                <td class="editable" data-field-name="score2"><?php echo $data['score2']; ?></td>
+                <td class="editable" data-field-name="score3"><?php echo $data['score3']; ?></td>
+                <td class="editable" data-field-name="score4"><?php echo $data['score4']; ?></td>
+                <td class="editable" data-field-name="score5"><?php echo $data['score5']; ?></td>
+                <td class="editable" data-field-name="score6"><?php echo $data['score6']; ?></td>
+                <td class="editable" data-field-name="score7"><?php echo $data['score7']; ?></td>
+                <td class="editable" data-field-name="score8"><?php echo $data['score8']; ?></td>
+                <td class="editable" data-field-name="score9"><?php echo $data['score9']; ?></td>
+                <td class="editable" data-field-name="score10"><?php echo $data['score10']; ?></td>
+
+                <!-- Add other columns here -->
+            </tr>
+
+        <?php endforeach; ?>
+    <?php endif; ?>
+</table>
+
+</body>
+</html>
+
+update_performance.php
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+$servername = "localhost";
+$username = "AndersonSchool";
+$password = "SpecialEd69$";
+$dbname = "bFactor-test";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+if ($_POST['performance_id'] && $_POST['field_name'] && $_POST['new_value']) {
+    $performanceId = $_POST['performance_id'];
+    $fieldName = $_POST['field_name'];
+    $newValue = $_POST['new_value'];
+
+    // Update the database
+    $stmt = $conn->prepare("UPDATE Performance SET $fieldName = ? WHERE performance_id = ?");
+    $stmt->bind_param('si', $newValue, $performanceId);
+
+    if ($stmt->execute()) {
+        $response = array("success" => true);
+    } else {
+        $response = array("success" => false, "error" => "Database error: " . $stmt->error);
+    }
+
+    echo json_encode($response);
+} else {
+    $response = array("success" => false, "error" => "Invalid data provided.");
+    echo json_encode($response);
+}
+?>
+
+Test.php
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Page Title</title>
+</head>
+<body>
+
+    <!-- Add New Student Form -->
+    <form method="post" action="">
+        <label for="new_student_name">New Student Name:</label>
+        <input type="text" id="new_student_name" name="new_student_name">
+        <input type="submit" name="add_new_student" value="Add New Student">
+    </form>
+
+    <?php
+    // Error tracking: Log PHP errors to a file
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+    function logError($error) {
+        $logFile = 'error_log.txt';
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[$timestamp] $error\n";
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+    }
+
+    try {
+        // Database connection
+        $servername = "localhost";
+        $username = "AndersonSchool";
+        $password = "SpecialEd69$";
+        $dbname = "bFactor-test";
+
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        if ($conn->connect_error) {
+            throw new Exception("Connection failed: " . $conn->connect_error);
+        } else {
+            echo "Connected successfully to the database<br>";
+        }
+
+        // Start session
+        session_start();
+        if (!isset($_SESSION['teacher_id'])) {
+            throw new Exception("Teacher ID not set in session");
+        }
+
+        $teacherId = $_SESSION['teacher_id'];
+        echo "Teacher ID from session: " . $teacherId . "<br>";
+
+        // Add New Student
+        if (isset($_POST['add_new_student'])) {
+            $newStudentName = $_POST['new_student_name'];
+
+            if (!empty($newStudentName)) {
+                $stmt = $conn->prepare("INSERT INTO Students (name) VALUES (?)");
+                $stmt->bind_param('s', $newStudentName);
+                $stmt->execute();
+
+                if ($stmt->error) {
+                    throw new Exception("Error adding new student: " . $stmt->error);
+                }
+
+                $newStudentId = $conn->insert_id;
+
+                $stmt = $conn->prepare("INSERT INTO Teacher_Student_Assignment (teacher_id, student_id) VALUES (?, ?)");
+                $stmt->bind_param('ii', $teacherId, $newStudentId);
+                $stmt->execute();
+
+                if ($stmt->error) {
+                    throw new Exception("Error associating new student with teacher: " . $stmt->error);
+                }
+
+                echo "New student added successfully.<br>";
+            }
+        }
+
+        // Existing Students
+        $stmt = $conn->prepare("SELECT s.* FROM Students s INNER JOIN Teacher_Student_Assignment tsa ON s.student_id = tsa.student_id WHERE tsa.teacher_id = ?");
+        $stmt->bind_param('i', $teacherId);
+        $stmt->execute();
+
+        if ($stmt->error) {
+            throw new Exception("Error during student fetch: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $students = $result->fetch_all(MYSQLI_ASSOC);
+
+        if (empty($students)) {
+            echo "No students found for this teacher.";
+        } else {
+            echo "<h2>Students:</h2>";
+            foreach ($students as $student) {
+                echo "<a href='view_student_data.php?student_id=" . $student['student_id'] . "'>" . $student['name'] . "</a><br>";
+            }
+        }
+
+    } catch (Exception $e) {
+        logError($e->getMessage());
+        echo "An error occurred. Please try again later.";
+    }
+    ?>
+
+</body>
+</html>
+
+insert_performance.php
+<?php
+// Include your database connection settings
+include('./users/db.php');
+
+// Fetch data from POST request
+$studentId = $_POST['student_id'];
+$weekStartDate = $_POST['score_date'];
+$scores = $_POST['scores'];
+
+// Prepare SQL statement
+$stmt = $connection->prepare("INSERT INTO Performance (student_id, score_date, score1, score2, score3, score4, score5, score6, score7, score8, score9, score10/* ... other score fields */) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?/* ... other score values */)");
+
+// Bind the parameters
+$stmt->bindParam(1, $studentId);
+$stmt->bindParam(2, $weekStartDate);
+$stmt->bindParam(3, $scores['score1']);
+$stmt->bindParam(4, $scores['score2']);
+$stmt->bindParam(5, $scores['score3']);
+$stmt->bindParam(6, $scores['score4']);
+$stmt->bindParam(7, $scores['score5']);
+$stmt->bindParam(8, $scores['score6']);
+$stmt->bindParam(9, $scores['score7']);
+$stmt->bindParam(10, $scores['score8']);
+$stmt->bindParam(11, $scores['score9']);
+$stmt->bindParam(12, $scores['score10']);
+// ... continue for other score fields
+
+// Execute the statement
+$stmt->execute();
+?>
+
+1	performance_id Primary	int(11)			No	None		AUTO_INCREMENT	
+	2	student_id Index	int(11)			Yes	NULL			
+	3	teacher_id Index	int(11)			Yes	NULL			
+	4	score_date	date			Yes	NULL			
+	5	week_number	int(11)			Yes	NULL			
+	6	metadata_id Index	int(11)			Yes	NULL			
+	7	score1	decimal(5,2)			Yes	NULL			
+	8	score2	decimal(5,2)			Yes	NULL			
+	9	score3	decimal(5,2)			Yes	NULL			
+	10	score4	decimal(5,2)			Yes	NULL			
+	11	score5	decimal(5,2)			Yes	NULL			
+	12	score6	decimal(5,2)			Yes	NULL			
+	13	score7	decimal(5,2)			Yes	NULL			
+	14	score8	decimal(5,2)			Yes	NULL			
+	15	score9	decimal(5,2)			Yes	NULL			
+	16	score10	decimal(5,2)			Yes	NULL			

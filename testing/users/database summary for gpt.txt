@@ -1,0 +1,419 @@
+The following database is named 'bFactor-test'. 
+It is designed to have students and teachers in the school.
+The school is collecting and saving performance data for up to 10 goals for each student. 
+Teachers can only access student data that is allowed to them in the Teacher-Student-Assignment table.
+The accounts table is where teachers accounts are registered into the website through a separate landing site.
+The Goals table is currently not in use, but may be used in teh future if seperate data needs to be more organized or labelled.
+The Students table is used to store the basic student data in a list that will be called in other tables.
+The Teachers table is used to store the basic teacher data in a list that will be called in other tables.
+The Table 'Teacher-Student-Assignment' is being used to give teachers connections to different students so they can see their data.
+The Performance table is collecting data for about 41 scores in percentage for 10 different areas that are definable in the next Metadata table. 
+
+Table 'accounts'
+1	id Primary	int(11)			No	None		AUTO_INCREMENT	
+2	fname	varchar(50)	utf8_general_ci		No	None		
+3	lname	varchar(50)	utf8_general_ci		No	None		
+4	email	varchar(100)	utf8_general_ci		No	None		
+5	password	varchar(255)	utf8_general_ci		No	None		
+
+Table 'Goals' 
+1	goal_id Primary	int(11)			No	None		AUTO_INCREMENT	
+2	student_id Index	int(11)			Yes	NULL		
+3	goal_description	text	latin1_swedish_ci		Yes			
+4	goal_date	date			Yes	NULL		
+
+Table 'Students'
+1	student_id Primary	int(11)			No	None		AUTO_INCREMENT
+2	name	varchar(255)	latin1_swedish_ci		Yes	NULL		
+3	date_of_birth	date			Yes	NULL
+4	grade_level	varchar(50)	latin1_swedish_ci		Yes	NULL	
+
+Table 'Teachers'
+1	teacher_id Primary	int(11)			No	None		AUTO_INCREMENT
+2	name	varchar(255)	latin1_swedish_ci		No	None	
+3	subject_taught	varchar(255)	latin1_swedish_ci		Yes	NULL	
+4	account_id Index	int(11)			Yes	NULL		
+
+Table 'Teacher-Student-Assignment'
+1	assignment_id Primary	int(11)			No	None		AUTO_INCREMENT
+2	teacher_id Index	int(11)			Yes	NULL		
+3	student_id Index	int(11)			Yes	NULL	
+
+Table 'Performance'
+1	performance_id Primary	int(11)			No	None		AUTO_INCREMENT	
+2	student_id Index	int(11)			Yes	NULL		
+3	teacher_id Index	int(11)			Yes	NULL	
+4	score_date	date			Yes	NULL
+5	week_number	int(11)			Yes	NULL	
+6	metadata_id Index	int(11)			Yes	NULL
+7	score1	decimal(5,2)			Yes	NULL	
+8	score2	decimal(5,2)			Yes	NULL	
+9	score3	decimal(5,2)			Yes	NULL	
+10	score4	decimal(5,2)			Yes	NULL	
+11	score5	decimal(5,2)			Yes	NULL	
+12	score6	decimal(5,2)			Yes	NULL
+13	score7	decimal(5,2)			Yes	NULL	
+14	score8	decimal(5,2)			Yes	NULL	
+15	score9	decimal(5,2)			Yes	NULL	
+16	score10	decimal(5,2)			Yes	NULL	
+	
+Table 'Metadata'
+1	metadata_id Primary	int(11)			No	None		AUTO_INCREMENT	
+2	title	varchar(255)	latin1_swedish_ci		Yes	NULL		
+3	description	text	latin1_swedish_ci		Yes			
+4	category	varchar(255)	latin1_swedish_ci		Yes	NULL	
+
+
+This is a new table format for storing, editing, and displaying student performance data. 
+However, it is replacing an older less scalable database that was formatted as just a new table 
+for each student goal 
+
+Table 'JaylaBrazzle1'
+1	uuid PrimaryIndex	varchar(36)	latin1_swedish_ci		No	None	
+2	id Index	int(11)			No	None		AUTO_INCREMENT	
+3	goal	text	latin1_swedish_ci		Yes	
+4	date	date			Yes	NULL
+5	score	float			Yes	NULL	
+6	baseline	float			No	None
+
+I need php code that connects to this database after the user successfully logs in. 
+The user, or teacher, should see a list of students they are linked to through Teacher-Student-Assignment.
+If the teacher clicks the student they should then be able to see the most recent 41, 26, or 13 data points from Performance
+for the student that they selected. They should be able to edit that data within the table.
+
+
+I need new code to replace this old code to make queries on my new database format  instead of that old format
+<?php
+include("./users/auth_session.php");
+?>
+
+<?php
+session_start(); // Start the session
+
+$servername = "localhost";
+$username = "AndersonSchool";
+$password = "SpecialEd69$";
+$dbname = "AndersonSchool";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$selectedTable = $_POST['selected_table'] ?? $_SESSION['selected_table'] ?? 'JaylaBrazzle1'; // Set a default table name
+
+//echo "Updating records in table: $selectedTable<br>";
+
+// Handle updates for ID, date, score, and baseline
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
+    foreach ($_POST['id'] as $key => $id) {
+        $date = $_POST["date"][$key];
+        $score = $_POST["score"][$key];
+        $baseline = $_POST["baseline"][$key];
+
+        $update_sql = "UPDATE $selectedTable SET date='$date', score='$score', baseline='$baseline' WHERE id=$id";
+       
+        if ($conn->query($update_sql) !== TRUE) {
+            echo "Error updating record: " . $conn->error;
+        }
+    }
+}
+
+// Handle goal update
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_goal'])) {
+    $newGoal = $_POST["edit_goal"];
+    
+    // Update the goal in the database
+    $updateGoalSql = "UPDATE $selectedTable SET goal='$newGoal' WHERE 1";
+    if ($conn->query($updateGoalSql) !== TRUE) {
+        echo "Error updating goal: " . $conn->error;
+    }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['select_table'])) {
+    // Handle student selection
+    $selectedTable = $_POST['selected_table'];
+    $_SESSION['selected_table'] = $selectedTable; // Store the selected table value in a session variable
+}
+
+// Fetch data for the table
+$tableDataArray = array();
+$tableSql = "SELECT id, date, score, baseline, goal FROM $selectedTable";
+$tableResult = $conn->query($tableSql);
+if ($tableResult->num_rows > 0) {
+    while ($row = $tableResult->fetch_assoc()) {
+        $tableDataArray[] = $row;
+    }
+}
+
+// Fetch and store data from the database for the chart
+$chartDataArray1 = array();
+$chartSql1 = "SELECT date FROM $selectedTable";
+$chartResult1 = $conn->query($chartSql1);
+if ($chartResult1->num_rows > 0) {
+    while ($row = $chartResult1->fetch_assoc()) {
+        $chartDataArray1[] = array(
+            'x1' => $row['date'],     // Use the 'date' column as the x-variable
+        );
+    }
+}
+
+$chartDataArray2 = array();
+$chartSql2 = "SELECT baseline FROM $selectedTable";
+$chartResult2 = $conn->query($chartSql2);
+if ($chartResult2->num_rows > 0) {
+    while ($row = $chartResult2->fetch_assoc()) {
+        $chartDataArray2[] = array(
+            'y1' => $row['baseline'] // Use the 'baseline' column as the second y-variable
+        );
+    }
+}
+
+$chartDataArray3 = array();
+$chartSql3 = "SELECT score FROM $selectedTable";
+$chartResult3 = $conn->query($chartSql3);
+if ($chartResult3->num_rows > 0) {
+    while ($row = $chartResult3->fetch_assoc()) {
+        $chartDataArray3[] = array(
+            'y2' => $row['score'] // Use the 'baseline' column as the second y-variable
+        );
+    }
+}
+
+?>
+
+<h5 class="card-title"><?php echo($selectedTable);?></h5>
+
+                 <form method="post">
+                    <select name="selected_table">
+                      <option value='JaylaBrazzle1'<?= $selectedTable === 'JaylaBrazzle1' ? ' selected' : '' ?>>JaylaBrazzle1</option>
+                      <option value='JaylaBrazzle2'<?= $selectedTable === 'JaylaBrazzle2' ? ' selected' : '' ?>>JaylaBrazzle2</option>
+                      <option value='JaylaBrazzle3'<?= $selectedTable === 'JaylaBrazzle3' ? ' selected' : '' ?>>JaylaBrazzle3</option>
+                      <option value='JaylaBrazzle4'<?= $selectedTable === 'JaylaBrazzle4' ? ' selected' : '' ?>>JaylaBrazzle4</option>
+                      <option value='NicoleElkins1'<?= $selectedTable === 'NicoleElkins1' ? ' selected' : '' ?>>NicoleElkins1</option>
+                      <option value='NicoleElkins2'<?= $selectedTable === 'NicoleElkins2' ? ' selected' : '' ?>>NicoleElkins2</option>
+                      <option value='NicoleElkins3'<?= $selectedTable === 'NicoleElkins3' ? ' selected' : '' ?>>NicoleElkins3</option>
+                      <option value='NicoleElkins4'<?= $selectedTable === 'NicoleElkins4' ? ' selected' : '' ?>>NicoleElkins4</option>
+                    </select>
+                    <input type="submit" name="select_table" value="Select Student">
+                  </form>
+
+
+<!-- Form for updating the goal -->
+                  <form method="post" action="">
+                    <?php
+                    // Fetch the current goal value from the database
+                      $goalSql = "SELECT goal FROM $selectedTable LIMIT 1";
+                      $goalResult = $conn->query($goalSql);
+
+                        if ($goalResult && $goalResult->num_rows > 0) {
+                          $goalRow = $goalResult->fetch_assoc();
+                          $currentGoal = $goalRow["goal"];
+                          echo '<label for="edit_goal">Edit Goal: </label>';
+                          echo '<textarea name="edit_goal" id="edit_goal" rows="5" cols="40">' . htmlspecialchars($currentGoal) . '</textarea>';
+                        }
+                    ?>
+                    <input type="submit" name="save_goal" value="Save Goal">
+                  </form>
+
+
+<!-- Form for updating ID, date, score, and baseline -->
+                  <form method='post' action="">
+                    <table border='1'>
+                      <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Baseline</th>
+                      </tr>
+                    <?php
+                      foreach ($tableDataArray as $row) {
+                        echo "<tr>";
+                        echo "<td><input type='hidden' name='id[]' value='{$row["id"]}'>{$row["id"]}</td>";
+                        echo "<td><input type='date' name='date[]' value='{$row["date"]}'></td>";
+                        echo "<td><input type='number' name='score[]' value='{$row["score"]}'></td>";
+                        echo "<td><input type='number' name='baseline[]' value='{$row["baseline"]}'></td>";
+                        echo "</tr>";
+                      }
+                    ?>
+                    </table>
+                    <input type='submit' name='update' value='Update'>
+                  </form>
+				  
+				  
+<script>
+// Data from PHP
+var chartDataArray1 = <?php echo json_encode($chartDataArray1); ?>;
+var chartDataArray2 = <?php echo json_encode($chartDataArray2); ?>;
+var chartDataArray3 = <?php echo json_encode($chartDataArray3); ?>;
+
+// Process data to match ApexCharts format
+var chartData = [];
+var xCategories = [];
+
+for (var i = 0; i < chartDataArray1.length; i++) {
+var xValue = new Date(chartDataArray1[i].x1).getTime();
+var y1Value = chartDataArray2[i] ? parseFloat(chartDataArray2[i].y1) : null;
+var y2Value = chartDataArray3[i] ? parseFloat(chartDataArray3[i].y2) : null;
+
+chartData.push({
+x: xValue,
+y1: y1Value,
+y2: y2Value,
+});
+
+var formattedDate = new Date(xValue).toLocaleDateString();
+xCategories.push(formattedDate);
+}
+
+// Calculate linear regression for Score data series
+function calculateTrendline(data) {
+var sumX = 0;
+var sumY = 0;
+var sumXY = 0;
+var sumXX = 0;
+var count = 0;
+
+data.forEach(function (point) {
+var x = point.x;
+var y = point.y2;
+
+if (y !== null) {
+sumX += x;
+sumY += y;
+sumXY += x * y;
+sumXX += x * x;
+count++;
+}
+});
+
+var slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+var intercept = (sumY - slope * sumX) / count;
+
+return function (x) {
+return slope * x + intercept;
+};
+}
+
+var trendlineFunction = calculateTrendline(chartData);
+
+// Create ApexCharts chart
+var options = {
+series: [
+{
+name: 'Baseline',
+data: chartData.map(item => ({ x: item.x, y: item.y1 })),
+},
+{
+name: 'Score',
+data: chartData.map(item => ({ x: item.x, y: item.y2 })),
+
+},
+{
+name: 'Trendline',
+data: chartData.map(item => ({ x: item.x, y: trendlineFunction(item.x) })),
+
+},
+],
+chart: {
+type: 'line',
+stacked: false,
+width: 1000,
+toolbar: {
+show: true,
+tools: {
+download: false, // Enable the download button
+},},
+dropShadow: {
+enabled: true,
+color: '#000',
+top: 18,
+left: 7,
+blur: 10,
+opacity: 0.2
+},
+},
+stroke: {
+curve: 'smooth',
+width: [1, 3, 1],
+},
+markers: {
+size: 5,
+colors: undefined,
+strokeColors: '#fff',
+strokeWidth: 2,
+strokeOpacity: 0.9,
+strokeDashArray: 0,
+fillOpacity: 1,
+discrete: [],
+shape: "circle",
+radius: 2,
+offsetX: 0,
+offsetY: 0,
+onClick: undefined,
+onDblClick: undefined,
+showNullDataPoints: true,
+hover: {
+size: undefined,
+sizeOffset: 3
+}
+},
+xaxis: {
+categories: xCategories,
+type: 'datetime',
+tickAmount: xCategories.length,
+labels: {
+hideOverlappingLabels: false,
+formatter: function(value, timestamp, opts) {
+return new Date(value).toLocaleDateString(); // Format date label
+}
+},
+title: {
+text: 'Date'
+}
+},
+yaxis: {
+title: {
+text: 'Value'
+},
+labels: {
+formatter: function (value) {
+return value.toFixed(0);
+}
+}
+},
+grid: {
+xaxis: {
+lines: {
+show: true
+}
+}
+},
+annotations: {
+points: chartData
+.filter(item => item.y2 !== null)
+.map(item => ({
+x: item.x,
+y: item.y2,
+marker: {
+    size: 4,
+    fillColor: '#4CAF50',
+    offsetY: -15,
+},
+label: {
+    borderColor: '#4CAF50',
+    style: {
+        color: '#fff',
+        background: '#4CAF50'
+    },
+    text: item.y2.toFixed(0)  // Display 0 decimal places
+}
+})),
+},
+colors: ['#2196F3', '#4CAF50', '#FF5722'], // Trendline color added
+};
+
+var chart = new ApexCharts(document.querySelector("#chart"), options);
+chart.render();
+</script>

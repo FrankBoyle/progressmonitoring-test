@@ -1,0 +1,48 @@
+1. Authentication and Authorization:
+1.1. Login System:
+Implement a secure login system using the BFactor-test accounts table. Ensure passwords are hashed and salted (using libraries like bcrypt) for security.
+
+1.2. Role-based Access Control (RBAC):
+Based on the Admin column in the BFactor-test Teachers table, provide different levels of access. If Admin is set to 1, the user might have broader permissions, such as editing any student's data. If it's 0, they may only have read access or access to students within their school.
+
+2. Dashboard:
+Once logged in, teachers see a dashboard:
+
+2.1. List of Students:
+Display students associated with the teacher's school (SchoolID in the BFactor-test Students table matches the SchoolID in the BFactor-test Teachers table).
+
+2.2. Search and Filter Options:
+Provide dropdowns or search bars to filter students based on subject taught and score groups (BFactor-test ScoreGroups). This allows teachers to quickly find students based on specific criteria.
+
+2.3. Editing Capability:
+Next to each student, provide an Edit button that brings up a modal or new page. Here, teachers can update student information and performance scores. Ensure changes are saved back to the respective database tables.
+
+3. Viewing Student Scores:
+3.1. Student Score Page:
+When a teacher clicks on a student, they're taken to a detailed page showcasing the student's scores over the weeks. Use the BFactor-test Performance table to display this data.
+
+3.2. Grouped Scores:
+Use the BFactor-test GroupedScores and related tables to showcase scores grouped by specific criteria. This provides a holistic view of the student's performance.
+
+4. Data Security:
+4.1. SQL Injection Prevention:
+Use prepared statements or ORM (Object Relational Mapping) libraries to prevent SQL injection attacks when querying the database.
+
+4.2. Data Validation:
+Always validate data on both the client and server side before saving it to the database. For instance, ensure that a score entered is within acceptable ranges.
+
+4.3. Secure Communication:
+Ensure that your website uses HTTPS to encrypt data transmitted between the server and client.
+
+5. Responsive Design:
+Ensure that your website is mobile-responsive so that teachers can access and update student data from any device.
+
+6. Further Considerations:
+6.1. Logging and Monitoring:
+Maintain logs of who accessed or modified data, so there's an audit trail.
+
+6.2. Scalability:
+As more data gets added to the system, consider performance optimizations, such as paginating the student list.
+
+6.3. Notifications:
+Consider adding a system to notify teachers when a student's performance falls below a certain threshold.

@@ -1,0 +1,1296 @@
+@media (max-width: 768px) {
+
+
+    .content {
+        padding: 10px; 
+        flex-direction: column;
+    }
+
+    .content-students {
+        padding: 10px; 
+        flex-direction: column;
+    }
+
+    .create-group,
+    .students-list {
+        max-width: none;
+        width: 100%;
+    }
+
+    .existing-groups, .details {
+        width: 100%;
+    }
+
+    #performance-table {
+        width: 100%;
+        overflow-x: auto; /* Allows horizontal scrolling on small devices */
+        overflow-y: hidden; /* Prevents vertical scrolling within the table */
+    }
+
+    .box-centered-top {
+        width: 100%; /* Full width on smaller screens */
+        margin-top: 5px; /* Reduced margin on smaller screens */
+        max-height: auto; /* Smaller max height on smaller screens */
+    }
+
+    .chart-card {
+        max-width: 1000px; /* Ensure the card does not exceed 1000px */
+        width: 100%; /* Full width on smaller screens */
+        margin-bottom: 20px; /* Space between stacked cards */
+    }
+
+    .card {
+        padding: 10px;
+        margin: 10px;
+    }
+}
+
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.logo img {
+    max-height: 50px; /* Adjust as needed */
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #E5E5E5;
+    margin: 0;
+    padding: 0;
+
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem; /* Adjusted padding to reduce height */
+    background-color: #1A3E55; /* Very dark blue for more prominent navbar */
+    color: white;
+    position: fixed; /* Make the navbar fixed */
+    width: 100%;
+    top: 0;
+    z-index: 1000; /* Ensure it stays above other content */
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    margin-top: 75px; /* Adjust this value to match the height of the navbar */
+    width: 100%; /* Ensure it takes full width */
+}
+
+.content-students {
+    display: flex;
+    margin-top: 75px; /* Adjust this value to match the height of the navbar */
+    width: 100%; /* Ensure it takes full width */
+    /*align-items: center;*/
+}
+
+.content-column {
+    flex-direction: column;
+}
+
+/* Adjust content-wrapper and content-header to account for the fixed header */
+.content-wrapper {
+    padding-top: 3rem; /* Adjust this value to match the height of the fixed header */
+}
+
+.content-header {
+    margin-top: 2rem; /* Optional: add additional margin if needed */
+}
+
+.logo {
+    font-weight: bold;
+}
+
+.header-icons span {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.card {
+    background-color: #c0c8c8; /* Lighter shade for panels */
+    border: 1.5px solid #a3bbcf; /* Soft blue border from the palette */
+    padding: 1rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: auto;
+    box-sizing: border-box;
+}
+
+.card-header, .box-header {
+    font-size: 1.25rem; /* Adjusted font size */
+    margin-bottom: 0.5rem;
+    background-color: transparent; /* Light blue for headers */
+}
+
+.card-title {
+    font-size: 1.5rem; /* Adjusted font size */
+}
+
+.card-body {
+    font-size: 1rem; /* Adjusted font size */
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.input-group .form-control {
+    flex: 1;
+}
+
+#filterData {
+    white-space: nowrap;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+
+.box {
+    background-color: #f9f9f9; /* Lighter shade for panels */
+    border: 1.5px solid #D6E4F0; /* Soft blue border from the palette */
+    padding: 1rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: auto;
+}
+
+/* Hover effects on interactive elements */
+.box:hover, .card:hover {
+    border-color: #b7dffa; /* Slightly darker blue for hover */
+}
+
+.create-group, .students-list {
+    flex-basis: auto;
+    flex-shrink: 0;
+}
+
+.create-group {
+    width: auto;
+}
+
+.students-list {
+    width: auto;
+}
+
+.existing-groups, .details {
+    flex: 1;
+}
+
+.selected-group, .selected-student {
+    font-weight: bold;
+    background-color: #ccc;
+}
+
+.options-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.options-btn:hover {
+    color: #999;
+    background-color: #2F6F99; /* Medium blue */
+    font-weight: bold;
+}
+
+.options-btn::before {
+    content: '⋮';
+    font-size: 30px;
+    color: #111;
+}
+
+.group-options {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 1000;
+}
+
+/* Buttons */
+button {
+    background-color: #0F77BD; /* Bright blue for buttons */
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #2F6F99; /* Medium blue for button hover */
+    font-weight: bold;
+}
+
+.group-options button {
+    display: block;
+    width: 100%;
+    border: none;
+    background: #ccc;
+    background-color: #e0e0e0;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #111;
+}
+
+.group-options button:hover {
+    background-color: #255677; /* Deep blue */
+    font-weight: bold;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    background-color: #f0f0f0; /* Very light grey for list items */
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid #D6E4F0; /* Soft blue line separator */
+}
+
+ul li:hover, ul li.selected-student, ul li.selected-group{
+    background-color: #D6E4F0; /* Soft blue for selected item */
+    font-weight: bold;
+    color: #333;
+}
+
+.add-group-btn {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: 5px;
+}
+
+.add-student-btn {  
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-left: 5px;
+}
+
+.add-goal-btn {  
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-left: 5px;
+}
+
+h2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+h3 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #45A0DD; /* Lighter blue to match hover state of navbar */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.goal-category {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 1rem 0;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.goal-item {
+    max-width: 1000px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    position: relative;
+    padding-right: 90px; /* Adjust the padding to fit the button */
+}
+
+.goal-item.selected {
+    background-color: #47A6E6;
+    color: #fff;
+}
+
+.goal-item .edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 70px; /* Adjusted to make room for the archive button */
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.edit-group-btn {
+    z-index: 10; /* Lower than the modal */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+}
+
+.archive-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    position: absolute;
+    right: 10px; /* Position the button to the right */
+    top: 10px; /* Align to the top */
+}
+
+.goal-item .edit-btn::after {
+    content: 'Edit';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #333;
+    color: white;
+    padding: 3px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.goal-item .edit-btn:hover::after {
+    opacity: 1;
+}
+
+.save-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-right: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.goal-item .save-btn:hover {
+    background-color: #333;
+    font-weight: bold;
+}
+
+.archive-btn:hover {
+    background-color: darkred;
+}
+
+#dataTable_wrapper .col-md-6:eq(0) {
+    position: relative;
+    z-index: 1000;
+}
+
+.editable {
+    cursor: pointer;
+}
+
+.editable.editing {
+    background-color: #f4f4f4;
+}
+
+.editable input {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    background-color: transparent;
+    outline: none;
+}
+
+.fixed-width {
+    width: 100px;
+}
+
+.fixed-width-cell {
+    width: 100px;
+    /*white-space: nowrap;*/
+    padding: 0;
+    margin: 0;
+}
+
+.goal-container {
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.goal-container.selected {
+    background-color: #e0e0e0;
+    border: 1px solid #007bff;
+}
+
+.highlighted {
+    background-color: #ffff99;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    min-width: 50px;
+    height: 25px;
+    box-sizing: border-box;
+}
+
+td .cell-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 8px;
+    margin: 0;
+    box-sizing: border-box;
+    background: transparent;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000; /* Higher than any other element */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    z-index: 1001; /* Ensure it's higher than the button */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the start */
+
+}
+
+.modal-content .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+input[type="text"] {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group label {
+    white-space: nowrap;
+
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.form-group .form-control {
+    flex: 1;
+}
+
+.form-actions {
+    margin-bottom: 20px;
+}
+
+.header-icons .nav-link i {
+    margin-right: 5px;
+}
+
+/* Navbar link hover effect */
+.header-icons span:hover, .header-icons .nav-link:hover {
+    background-color: #45A0DD; /* Lighter blue for hover */
+    padding: 10px; /* Add padding to increase the hover area */
+    border-radius: 5px; /* Optional: adds rounded corners */
+}
+
+.header-icons .nav-link:hover {
+    color: #f0f0f0;
+}
+
+.header-icons .nav-link {
+    display: flex;
+    align-items: center;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+}
+
+/* Additional styles for login form */
+/* Centering the content */
+.center-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.login-box {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+}
+
+.login-box-msg {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+    text-align: center;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.fas {
+    position: absolute;
+    margin-left: -25px;
+    margin-top: 15px;
+    color: #999;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.remember-me input {
+    margin-right: 0.5rem;
+}
+
+.remember-me label {
+    margin: 0;
+}
+
+.info, .text-center {
+    text-align: center;
+    color: #007bff;
+}
+
+.info {
+    margin: 1rem 0;
+}
+
+.mb-1, .mb-0 {
+    margin-bottom: 1rem;
+}
+
+.forgot-password {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.forgot-password form {
+    width: 100%;
+}
+
+.forgot-password input[type="email"] {
+    margin-bottom: 1rem;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+}
+
+/* General style for navbar links */
+.header-icons span, .header-icons .nav-link {
+    margin-right: 20px;
+    font-size: 1.2rem;
+    color: white;
+    text-decoration: none;
+    padding: 10px; /* Padding for spacing and better hover effect */
+    border-radius: 5px; /* Optional: rounded corners */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+.header-icons .nav-link i {
+    margin-right: 5px;
+}
+
+.header-icons .nav-link:hover {
+    color: #f0f0f0;
+}
+
+.header-icons .nav-link {
+    display: flex;
+    align-items: center;
+}
+
+.message {
+    font-size: 16px;
+    color: #333;
+    margin-top: 20px;
+}
+.column {
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin: 10px;
+    width: 45%;
+    float: left;
+}
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.tabulator {
+    border-radius: 8px; /* Rounds corners for a softer look */
+    width: auto;
+    overflow-x: hidden;
+}
+
+.tabulator-header .tabulator-col {
+    background-color: #9bc4ff; /* Light gray background for headers*/
+    color: #000000; /* Darker text for better readability*/
+    font-weight: bold; /* Make header text bold*/
+    padding: 10px 0; /* Padding for better spacing */
+    border-right: 1px solid #ddd; /* Add borders for separation*/
+    text-align: center;
+    white-space: normal;
+}
+
+.tabulator .tabulator-header .tabulator-col:last-child {
+    border-right: none; /* Remove the right border for the last column */
+}
+
+#performance-table .tabulator-header {
+    position: sticky;
+    top: 0;
+    z-index: 10; 
+    color: #000000; /* Dark text for better readability */
+}
+
+.tabulator-row {
+    border-bottom: 1px solid #eee; /* Adds separation between rows */
+}
+
+.tabulator-cell {
+    padding: 10px 6px; /* More padding within cells */
+    font-size: 16px; /* Larger text for easier reading */
+    color: #000000; /* Darker text for better contrast */
+    text-align: left;
+}
+
+.left-align-cell {
+    text-align: left;  /* Apply left alignment to cell content */
+}
+
+.center-align-header {
+    text-align: center;  /* Apply center alignment to header */
+}
+
+#performance-table {
+    max-height: 500px; /* Limit the table height */
+    overflow-y: auto; /* Enable vertical scrolling within the table */
+    width: 100%;
+    overflow-x: auto; /* Allows horizontal scrolling on small devices */
+}
+
+.box-centered-top {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 10px; /* Add bottom margin */
+    overflow-x: hidden; /* Hide horizontal scroll if it appears */
+}
+
+/* Optional: Enhance scrollbar appearance for better UX */
+.box-centered-top::-webkit-scrollbar {
+    width: 8px;
+}
+
+.box-centered-top::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    border-radius: 10px;
+}
+
+#performance-table .tabulator-row {
+    border-bottom: 1px solid #777676; /* Adds a subtle line between rows */
+}
+
+#performance-table .tabulator-row:nth-child(odd) {
+    background-color: #deffff; /* Lighter shade for alternate rows */
+}
+
+#performance-table .tabulator-row:nth-child(even) {
+    background-color: #F5FFFF; /* Slightly darker for contrast */
+}
+
+#performance-table .tabulator-cell {
+    border-right: 1px solid #777676; /* Adds vertical lines if needed */
+    padding: 8px 10px; /* Adjust padding for cell content */
+}
+
+#performance-table .tabulator-col:last-child {
+    border-right: none;
+}
+
+/* Custom styling for header cells */
+#performance-table .tabulator-col {
+    border-right: 1px solid #ccc; /* Vertical lines between headers */
+    text-align: center; /* Ensure header text is centered */
+    white-space: normal; /* Allow text to wrap */
+}
+
+.chart-wrapper {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/*
+@media print {
+    .print-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .goal-text-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 10px;
+        box-sizing: border-box;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    .goal-text {
+        line-height: 1.5;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        white-space: normal;
+        max-width: 100%;
+    }
+
+    .content, .dashboard {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}*/
+
+/* Regular styles */
+.goal-text-container {
+    max-width: 1000px; /* Ensure it does not exceed 1000px */
+    margin: 0 auto;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: normal;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.goal-text {
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 1000px; /* Ensure it does not exceed 1000px */
+    margin: 0 auto;
+}
+
+#chartContainer, #barChartContainer {
+    width: 1000px;
+}
+
+.chart {
+    width: 100%; /* Make the chart take the full width of the wrapper */
+    height: auto; /* Set a fixed height for the charts */
+    border: 1px solid #ccc; /* Optional: Add a border for better visual separation */
+
+}
+
+.chart-card {
+    background-color: #c0c8c8; /* Same as other cards */
+    border: 1.5px solid #a3bbcf; /* Same border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: auto; /* Ensure full width */
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent overflow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* For positioning the minimize button */
+}
+
+.column-select-card {
+    background-color: #c0c8c8; /* Same as other cards */
+    border: 1.5px solid #a3bbcf; /* Same border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: auto; /* Ensure full width */
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent overflow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* For positioning the minimize button */
+}
+
+.minimize-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #f1f1f1;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.minimized {
+    height: 40px; /* Adjust as needed */
+    overflow: hidden;
+}
+
+.checkbox-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Creates a responsive grid layout for checkboxes */
+    gap: 10px; /* Space between grid items */
+}
+
+.checkbox-container label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.selector-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.selector-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 5px; /* Increased padding for better appearance */
+    margin: 0px; /* Add some margin around the buttons */
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px; /* More rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for better visuals */
+    cursor: pointer;
+    transition: background-color 0.1s, box-shadow 0.1s; /* Smooth transitions */
+    text-align: center; /* Center text */
+    min-width: 100px; /* Ensure buttons are not too narrow */
+
+}
+
+.selector-item.selected {
+    background-color: #47A6E6; /* Light blue for selected items */
+    color: #fff;
+    border-color: #47A6E6;
+}
+
+#columnSelector {
+    display: flex;
+    flex-wrap: wrap; /* Allows items to wrap within the container */
+    gap: 5px; /* Space between checkboxes */
+}
+
+#statistics {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    max-width: 1000px; /* Ensures the section stays within 1000px */
+    margin: 0 auto;
+}
+
+#statsTable {
+    width: 100%;
+    max-width: 1000px;
+    border-collapse: collapse;
+}
+
+#statsTable th, #statsTable td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    white-space: normal; /* Allow text to wrap */
+    overflow-wrap: break-word; /* Break long words */
+    word-break: break-all; /* Ensure long words are wrapped */
+}
+
+#statsTable th {
+    background-color: #eee;
+}
+
+#statsTable td {
+    white-space: normal; /* Allow text to wrap */
+}
+
+.card.chart-card {
+    display: flex;
+    align-items: flex-start; /* Align items at the start of the flex container */
+    justify-content: space-between; /* Space between the two main divs */
+    padding: 20px;
+    background-color: #c0c8c8; /* Background color of the card */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.selector-area {
+    flex: 1; /* Takes up 1 part of the available space */
+    /*margin-right: 20px; /* Margin between selectors and statistics */
+}
+
+#printReportBtn {
+    position: relative;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.selection-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.print-table-container,
+.print-graph,
+.statistics-area {
+    flex: 1 1 100%;
+    margin: 10px 0;
+    max-width: 1000px; /* Ensure maximum width is set */
+}
+
+.print-table th, .print-table td, .print-graph th, .print-graph td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+    word-wrap: break-word; /* Ensure long words are wrapped */
+}
+
+.statistics-table {
+    width: 100%;
+    box-sizing: border-box;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.statistics-table th, .statistics-table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+    word-wrap: break-word; /* Ensure long words are wrapped */
+}
+
+.statistics-area {
+    flex: 1 1 100%;
+    max-width: 1000px;
+    margin: 10px 0;
+}
+
+.report-details {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.report-details div {
+    flex: 1;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+#assign-students-form, #group-students-list-add, #metadataOptionSelector, #goal-description, #goal-date, #date-of-birth, #reportingPeriodContainer, #notes-container {
+    margin-bottom: 15px;
+}
+
+#reportingPeriodContainer {
+    margin-top: 20px;
+}
+
+.thumbnail-image {
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border: 2px solid black; /* Black outline */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Tiny shadow */
+    margin: 5px; /* Add some margin between thumbnails */
+}
+
+.progress-reports {
+    margin-top: 10px;
+}
+
+.thumbnails {
+    display: flex;
+    gap: 10px;
+}
+
+.thumbnail-container {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+}
+
+.thumbnail {
+    width: 50px;
+    height: 50px;
+    border: 2px solid black;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+}
+
+.btn-archive {
+    padding: 8px 16px; 
+    margin: auto; 
+    display: block; 
+    text-align: center; 
+    background-color: #dc3545;
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+
+.btn-activate {
+    padding: 8px 16px;
+    margin: auto;
+    display: block;
+    text-align: center;
+    background-color: #007bff; 
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background-color: darkred;
+}
+
+.group-section {
+    margin-bottom: 20px;
+}
+
+.collapsible-content {
+    display: none;
+    overflow: hidden;
+    padding: 0 15px;
+    margin-top: 10px;
+}
+
+.toggle-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 3px;
+    margin-left: 10px;
+}
+
+.toggle-btn:hover {
+    background-color: #0056b3;
+}
+
+#edit-group-form {
+    display: flex;
+    flex-direction: column;
+}
+
+#edit-group-form .btn-primary {
+    margin-right: 10px;
+}
+
+#share-group-form select {
+    margin-bottom: 10px;
+}
+
+/* Add this to your CSS file or within a <style> tag in your HTML */
+.modal-content button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-content .delete-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.modal-content .delete-btn:hover {
+    background-color: darkred;
+}

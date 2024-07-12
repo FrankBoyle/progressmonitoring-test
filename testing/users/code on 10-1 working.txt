@@ -1,0 +1,1061 @@
+I have this code, and I know it's a lot at once. I have an issue that I added some additional functionality and linking in my database.
+I would like to click the student name on test.php that takes me to view_student_data.php. However, when I get to that page I would like a drop down that allows me to use the new database system you just helped me with to filter the data that I can see and graph as a user. Can you as an expert full stack dev give me code suggestions to complete that task?
+
+view_student_data.php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Performance Data</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        /* General Styles */
+body {
+    font-family: 'Arial', sans-serif;  /* Assuming Arial as it's a common font for admin panels */
+    background-color: #f4f6f9;
+    color: #333;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+table thead {
+    background-color: #f5f5f5;
+}
+
+table thead th {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+table tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tbody tr:hover {
+    background-color: #eef1f4;
+}
+
+table tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Button Styles */
+button {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #c0c0c0;
+    cursor: not-allowed;
+}
+
+/* Form & Input Styles */
+select, input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-right: 10px;
+    width: auto;
+}
+
+label {
+    margin-right: 10px;
+}
+
+/* Responsive Styles */
+@media only screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    table, select, input[type="text"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+</style>
+</head>
+<body>
+<?php include('./users/fetch_data.php'); ?>
+<input type="hidden" id="currentStudentId" value="<?php echo htmlspecialchars($studentId); ?>" />
+<input type="hidden" id="currentWeekStartDate" value="<?php echo htmlspecialchars($currentWeekStartDate); ?>" />
+
+<h1>Student Performance Data</h1>
+<button id="addDataRow">Add Data Row</button>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Week Start Date</th>
+            <?php foreach ($scoreNames as $key => $name): ?>
+                <th><?php echo $name; ?></th>
+            <?php endforeach; ?>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <?php if (empty($performanceData)): ?>
+        <tr>
+            <td colspan="11">No Data Found. Click "Add Data Row" to add new data.</td>
+        </tr>
+    <?php else: ?>
+        <?php foreach ($performanceData as $data): ?>
+            <tr data-performance-id="<?php echo $data['performance_id']; ?>">
+                <td class="editable" data-field-name="score_date">
+                    <?php
+                    if (isset($data['score_date'])) {
+                        echo date("m/d/Y", strtotime($data['score_date']));
+                    }
+                    ?>
+                </td>
+                <!-- Add scores using loop -->
+                <?php for ($i = 1; $i <= 10; $i++): ?>
+                    <td class="editable" data-field-name="score<?php echo $i; ?>">
+                        <?php
+                        if (isset($data['score'.$i])) {
+                            echo $data['score'.$i];
+                        }
+                        ?>
+                    </td>
+                <?php endfor; ?>
+                <td><button class="deleteRow" data-performance-id="<?php echo $data['performance_id']; ?>">Delete</button></td> <!-- New delete button for each row -->
+            </tr>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</table>
+
+<label>Select Score to Display: </label>
+<select id="scoreSelector">
+    <?php foreach ($scoreNames as $key => $name): ?>
+        <option value="<?php echo $key; ?>"><?php echo htmlspecialchars($name); ?></option>
+    <?php endforeach; ?>
+</select>
+
+<label>Enter Benchmark Value: </label>
+<input type="text" id="benchmarkValue">
+<button id="updateBenchmark">Update Benchmark</button>
+
+<div id="chart"></div>  <!-- Div to display the chart -->
+<script>
+var benchmark = null;
+
+$(document).ready(function() {
+    initializeChart();
+
+    benchmark = parseFloat($("#benchmarkValue").val());
+    if (isNaN(benchmark)) {
+        benchmark = null;  // Default benchmark value if the input is not provided
+    }
+
+    $("#scoreSelector").change(function() {
+        var selectedScore = $(this).val();
+        updateChart(selectedScore);
+    });
+
+    $("#updateBenchmark").click(function() {
+        var value = parseFloat($("#benchmarkValue").val());
+        if (!isNaN(value)) {
+            benchmark = value;
+            var selectedScore = $("#scoreSelector").val();
+            updateChart(selectedScore);
+        } else {
+            alert('Please enter a valid benchmark value.');
+        }
+    });
+
+    updateChart('score1');  // Default
+});
+
+function initializeChart() {
+    window.chart = new ApexCharts(document.querySelector("#chart"), getChartOptions([], []));
+    window.chart.render();
+}
+
+function getChartData(scoreField) {
+    var chartData = [];
+    var xCategories = [];
+
+    $('tr[data-performance-id]').each(function() {
+        var weekStartDate = $(this).find('td[data-field-name="score_date"]').text();
+        var scoreValue = $(this).find(`td[data-field-name="${scoreField}"]`).text();
+
+        if (weekStartDate !== 'New Entry' && !isNaN(parseFloat(scoreValue))) {
+            chartData.push({
+                x: weekStartDate,  // Directly use the date string
+                y: parseFloat(scoreValue)
+            });
+
+            xCategories.push(weekStartDate);
+        }
+    });
+
+    //if (benchmark === null) {
+    //    benchmark = 0; // Default value if benchmark is not set
+    //}
+    chartData.reverse();
+    xCategories.reverse();  
+    return {chartData, xCategories};
+}
+
+function updateChart(scoreField) {
+    var {chartData, xCategories} = getChartData(scoreField);
+
+    // Calculate trendline
+    var trendlineFunction = calculateTrendline(chartData);
+    var trendlineData = chartData.map((item, index) => {
+        return {
+            x: item.x,
+            y: trendlineFunction(index)
+        };
+    });
+
+    var seriesData = [
+        {
+            name: 'Selected Score',
+            data: chartData,
+            connectNulls: true,  // Add this line here
+            stroke: {
+                width: 7  // Adjust this value to your desired thickness
+            }
+        },
+        {
+            name: 'Trendline',
+            data: trendlineData,
+            connectNulls: true  // And add it here as well, if you want to connect null values for the trendline too
+        }
+    ];
+
+    if (benchmark !== null) {
+    var benchmarkData = xCategories.map(date => {
+        return {
+            x: date,
+            y: benchmark
+        };
+    }).reverse();
+    seriesData.push({
+        name: 'Benchmark',
+        data: benchmarkData,
+        connectNulls: true  // Keep this if you want to connect null values for the benchmark series
+    });
+}
+
+
+    window.chart.updateOptions(getChartOptions(seriesData, xCategories));
+}
+
+function getChartOptions(dataSeries, xCategories) {
+    return {
+        series: dataSeries,
+        chart: {
+            type: 'line',
+            stacked: false,
+            width: 1000,
+            toolbar: {
+                show: true,
+                tools: {
+                    download: false
+                }
+            },
+            dropShadow: {
+                enabled: true,
+                color: '#000',
+                top: 18,
+                left: 7,
+                blur: 10,
+                opacity: 0.2
+            }
+        },
+
+    dataLabels: {
+    enabled: true,
+    enabledOnSeries: [0],  // enable only on the first series
+    offsetY: -5,
+    style: {
+        fontSize: '12px',
+        colors: ['#333']
+    }
+},
+
+        stroke: {
+            curve: 'smooth',
+            width: dataSeries.map(series => series.name === 'Selected Score' ? 3 : 1)  // Set width based on series name
+        },
+        markers: {
+            size: 5,
+            colors: undefined,
+            strokeColors: '#fff',
+            strokeWidth: 2,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            discrete: [],
+            shape: "circle",
+            radius: 2,
+            offsetX: 0,
+            offsetY: 0,
+            onClick: undefined,
+            onDblClick: undefined,
+            showNullDataPoints: true,
+            hover: {
+                size: undefined,
+                sizeOffset: 3
+            }
+        },
+
+        xaxis: {
+                type: 'category', 
+                categories: xCategories,
+            labels: {
+                hideOverlappingLabels: false,
+                formatter: function(value) {
+                    return value;  // Simply return the value since we're not working with timestamps anymore
+                }
+            },
+            title: {
+                text: 'Date'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Value'
+            },
+            labels: {
+                formatter: function(value) {
+                    return value.toFixed(0);
+                }
+            }
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                    show: true
+                }
+            }
+        },
+        colors: ['#2196F3', '#FF5722', '#000000']
+    };
+}
+
+function calculateTrendline(data) {
+    var sumX = 0;
+    var sumY = 0;
+    var sumXY = 0;
+    var sumXX = 0;
+    var count = 0;
+
+    data.forEach(function (point, index) {
+        var x = index; // Use index as the x value
+        var y = point.y;
+
+        if (y !== null) {
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumXX += x * x;
+            count++;
+        }
+    });
+
+    var slope = (count * sumXY - sumX * sumY) / (count * sumXX - sumX * sumX);
+    var intercept = (sumY - slope * sumX) / count;
+
+    return function (x) {
+        return slope * x + intercept;
+    };
+}
+</script>
+<script>
+$(document).ready(function() {
+
+    function isValidDate(d) {
+        return d instanceof Date && !isNaN(d);
+    }
+
+    function convertToDatabaseDate(dateString) {
+        if (!dateString || dateString === "New Entry") {
+            return dateString;
+        }
+        const parts = dateString.split('/');
+        if (parts.length !== 3) {
+            return dateString;
+        }
+        return `${parts[2]}-${parts[0]}-${parts[1]}`;
+    }
+
+    function convertToDisplayDate(databaseString) {
+        if (!databaseString || databaseString === "New Entry") {
+            return databaseString;
+        }
+        const parts = databaseString.split('-');
+        if (parts.length !== 3) {
+            return databaseString;
+        }
+        return `${parts[1]}/${parts[2]}/${parts[0]}`;  // Convert to mm/dd/yyyy format
+    }
+
+    function attachEditableHandler() {
+        $('.editable').off('click').on('click', function() {
+            const cell = $(this);
+            const originalValue = cell.text();
+            const input = $('<input type="text">');
+            input.val(originalValue);
+
+            let datePickerActive = false;
+
+            if (cell.data('field-name') === 'score_date') {
+                input.datepicker({
+                    dateFormat: 'mm/dd/yy',
+                    beforeShow: function() {
+                        datePickerActive = true;
+                    },
+                    onClose: function(selectedDate) {
+                        if (isValidDate(new Date(selectedDate))) {
+                            cell.text(selectedDate);  // Set the selected date
+                            cell.append(input.hide());  // Hide the input to show the cell text
+                            saveEditedDate(cell, selectedDate); // Save the edited date
+                        }
+                        datePickerActive = false;
+                    }
+                });
+                cell.html(input);
+                input.focus();
+            } else {
+                cell.html(input);
+                input.focus();
+            }
+
+            input.blur(function() {
+                if (datePickerActive) {
+                    return;
+                }
+
+                let newValue = input.val();
+                if (cell.data('field-name') === 'score_date') {
+                    const parts = newValue.split('/');
+                    if (parts.length !== 3) {
+                        cell.html(originalValue);
+                        return;
+                    }
+                    // Save the new value for the database but display the original mm/dd/yyyy format to the user
+                    cell.html(newValue);  // The selected value from datepicker is already in mm/dd/yyyy format, so just display it
+                    newValue = convertToDatabaseDate(newValue);  // Convert to yyyy-mm-dd format for database use
+                    saveEditedDate(cell, newValue); // Save the edited date
+                } else {
+                    cell.html(newValue);
+                }
+
+                const performanceId = cell.closest('tr').data('performance-id');
+                const fieldName = cell.data('field-name');
+                const targetUrl = (performanceId === 'new') ? 'insert_performance.php' : 'update_performance.php';
+                const studentId = $('#currentStudentId').val();
+                const weekStartDate = convertToDatabaseDate($('#currentWeekStartDate').val());
+
+                let postData = {
+                    performance_id: performanceId,
+                    field_name: fieldName,
+                    new_value: newValue,
+                    student_id: studentId,
+                    score_date: weekStartDate
+                };
+
+                if (performanceId === 'new') {
+                    let scores = {};
+                    for (let i = 1; i <= 10; i++) {
+                        //const scoreValue = row.find(`td[data-field-name="score${i}"]`).text();
+                        scores['score' + i] = scoreValue ? scoreValue : null; // Send null if score is empty
+                    }
+                    postData.scores = scores;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: targetUrl,
+                    data: postData,
+                    success: function(response) {
+                        if (performanceId === 'new') {
+                            const newRow = $('tr[data-performance-id="new"]');
+                            newRow.attr('data-performance-id', response.performance_id);
+                            newRow.find('td[data-field-name="score_date"]').text(convertToDisplayDate(response.saved_date));
+                        }
+    
+    // New code for updating score8 starts here
+                        if (['score1', 'score2', 'score3', 'score4'].includes(fieldName)) {
+                            const row = cell.closest('tr');
+                            const score1 = parseFloat(row.find('td[data-field-name="score1"]').text()) || 0;
+                            const score2 = parseFloat(row.find('td[data-field-name="score2"]').text()) || 0;
+                            const score3 = parseFloat(row.find('td[data-field-name="score3"]').text()) || 0;
+                            const score4 = parseFloat(row.find('td[data-field-name="score4"]').text()) || 0;
+                            const average = (score1 + score2 + score3 + score4) / 4;
+                            row.find('td[data-field-name="score8"]').text(average.toFixed(2)); // Format the result to 2 decimal places
+                            // Update the score8 value in the database
+                            updateScoreInDatabase(row, 'score8', average.toFixed(2));
+                        }
+                    },
+                    error: function() {
+                        // Handle any error here, e.g., show a notification to the user
+                        alert("There was an error updating the data.");
+                    }
+                });
+            });
+
+            // Pressing Enter to save changes
+            input.keypress(function(e) {
+                if (e.which === 13) {
+                    input.blur();
+                }
+            });
+        });
+    }
+
+    function saveEditedDate(cell, newDate) {
+        const performanceId = cell.closest('tr').data('performance-id');
+        const fieldName = cell.data('field-name');
+        const targetUrl = 'update_performance.php';
+
+        const studentId = $('#currentStudentId').val();
+
+        let postData = {
+            performance_id: performanceId,
+            field_name: fieldName,
+            new_value: convertToDatabaseDate(newDate), // Convert to yyyy-mm-dd format before sending
+            student_id: studentId
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: targetUrl,
+            data: postData,
+            success: function(response) {
+                // Assuming your server response contains the saved date under the key 'saved_date'
+                cell.data('saved-date', response.saved_date);
+            },
+            error: function() {
+                // Handle any error here, e.g., show a notification to the user
+                alert("There was an error saving the edited date.");
+            }
+        });
+    }
+    attachEditableHandler();
+
+    function updateScoreInDatabase(row, fieldName, newValue) {
+        const performanceId = row.data('performance-id');
+        const studentId = $('#currentStudentId').val();
+        const weekStartDate = convertToDatabaseDate($('#currentWeekStartDate').val());
+
+    $.ajax({
+        type: 'POST',
+        url: 'update_performance.php',
+        data: {
+            performance_id: performanceId,
+            field_name: fieldName,
+            new_value: newValue,
+            student_id: studentId,
+            score_date: weekStartDate
+        },
+        success: function(response) {
+            if (response && !response.success) {
+                //alert("Error updating the average score in the database.");
+            }
+        },
+        error: function() {
+            alert("There was an error updating the average score in the database.");
+        }
+    });
+}
+
+    $('#addDataRow').click(function() {
+        // Check if there's already a "new" row
+        if ($('tr[data-performance-id="new"]').length > 0) {
+            alert("Please save the existing new entry before adding another one.");
+            return;
+        }
+
+        // Your code to add a new row
+        const currentDate = new Date();
+        const formattedDate = (currentDate.getMonth() + 1).toString().padStart(2, '0') + '/' +
+            currentDate.getDate().toString().padStart(2, '0') + '/' +
+            currentDate.getFullYear();
+        var newRow = $("<tr data-performance-id='new'>");
+        newRow.append('<td class="editable" data-field-name="score_date">' + formattedDate + '</td>');  // Set the current date as default
+        for (let i = 1; i <= 10; i++) {
+            newRow.append('<td class="editable" data-field-name="score' + i + '"></td>');
+        }
+        $("table").append(newRow);
+
+        // Automatically trigger saving for the new row's "Week Start Date"
+        newRow.find('td[data-field-name="score_date"]').click().blur();
+        saveEditedDate(newRow.find('td[data-field-name="score_date"]'), formattedDate); // Save the edited date
+
+// Inside the `$('#addDataRow').click` function:
+newRow.append('<td><button class="saveRow">Save</button></td>');
+
+        attachEditableHandler();
+    });
+
+    const currentDate = new Date();
+    const formattedDate = (currentDate.getMonth() + 1).toString().padStart(2, '0') + '/' +
+        currentDate.getDate().toString().padStart(2, '0') + '/' +
+        currentDate.getFullYear();
+    $('#currentWeekStartDate').val(formattedDate);
+
+    $.ajaxSetup({
+        complete: function(xhr, status) {
+            if (status !== 'success') {
+                const response = xhr.responseJSON || {};
+                const errorMsg = response.error || 'Unknown error';
+                //alert(`There was an issue saving the data: ${errorMsg}`);
+                console.error(`Error response from server:`, response);
+            }
+        }
+    });
+
+    $(document).on('click', '.deleteRow', function() {
+    const row = $(this);  // Capture the button element for later use
+    const performanceId = $(this).data('performance-id');
+    
+    // Confirm before delete
+    if (!confirm('Are you sure you want to delete this row?')) {
+        return;
+    }
+    
+    // Send a request to delete the data from the server
+    $.post('delete_performance.php', {
+        performance_id: performanceId
+    }, function(response) {
+        // Handle the response, e.g., check if the deletion was successful
+        if (response.success) {
+            // Remove the corresponding row from the table
+            row.closest('tr').remove();
+        } else {
+            alert('Failed to delete data. Please try again.');
+        }
+    }, 'json');
+});
+
+$(document).on('click', '.saveRow', function() {
+    const row = $(this).closest('tr');
+    const performanceId = row.data('performance-id');
+    
+    if (performanceId === 'new') {
+        let postData = {
+            performance_id: performanceId,
+            student_id: $('#currentStudentId').val(),
+            score_date: convertToDatabaseDate(row.find('td[data-field-name="score_date"]').text())
+        };
+        
+        let scores = {};
+        for (let i = 1; i <= 10; i++) {
+            const scoreValue = row.find(`td[data-field-name="score${i}"]`).text();
+            scores['score' + i] = scoreValue ? scoreValue : null; // Send null if score is empty
+        }
+        postData.scores = scores;
+
+        $.ajax({
+            type: 'POST',
+            url: 'insert_performance.php',
+            data: postData,
+            success: function(response) {
+                row.attr('data-performance-id', response.performance_id);
+                row.find('td[data-field-name="score_date"]').text(convertToDisplayDate(response.saved_date));
+                // New code for updating score8 starts here
+                const score1 = parseFloat(row.find('td[data-field-name="score1"]').text()) || 0;
+                const score2 = parseFloat(row.find('td[data-field-name="score2"]').text()) || 0;
+                const score3 = parseFloat(row.find('td[data-field-name="score3"]').text()) || 0;
+                const score4 = parseFloat(row.find('td[data-field-name="score4"]').text()) || 0;
+                
+                const average = (score1 + score2 + score3 + score4) / 4;
+                row.find('td[data-field-name="score8"]').text(average.toFixed(2)); // Format the result to 2 decimal places
+                // Update the score8 value in the database
+                updateScoreInDatabase(row, 'score8', average.toFixed(2));
+                // Once saved, you might want to disable the save button or replace it with some other control.
+                row.find('.saveRow').prop('disabled', true);
+            },
+            error: function() {
+                alert("There was an error saving the new row.");
+            }
+        });
+    }
+});
+});
+</script>
+</body>
+</html>
+
+insert_performance.php
+<?php
+// Include the database connection script
+include('./users/db.php');
+
+// Function to log errors server-side
+function logError($error) {
+    // Log error to a file (Make sure your server has write permissions for this file)
+    file_put_contents('error_log.txt', $error . PHP_EOL, FILE_APPEND);
+}
+
+$responseData = [];
+
+// Check if the request method is POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // Validate that the necessary POST data is present
+    if (empty($_POST['student_id']) || empty($_POST['score_date']) || empty($_POST['scores'])) {
+        logError("Required data is missing.");
+        $responseData['error'] = 'An error occurred. Please try again later.';
+    } else {
+        $studentId = $_POST['student_id'];
+        $weekStartDate = $_POST['score_date'];
+        $scores = $_POST['scores']; // Assuming scores are passed as an array
+
+        $stmt = $connection->prepare("INSERT INTO Performance (student_id, score_date, score1, score2, score3, score4, score5, score6, score7, score8, score9, score10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        if ($stmt->execute([$studentId, $weekStartDate, $scores['score1'], $scores['score2'], $scores['score3'], $scores['score4'], $scores['score5'], $scores['score6'], $scores['score7'], $scores['score8'], $scores['score9'], $scores['score10']])) {
+            $newPerformanceId = $connection->lastInsertId();
+            $responseData = [
+                'performance_id' => $newPerformanceId,
+                'score_date' => $weekStartDate,
+                'scores' => $scores,
+            ];
+        } else {
+            logError("Failed to insert data: " . $stmt->error);
+            $responseData['error'] = 'An error occurred. Please try again later.';
+        }
+    }
+
+} else {
+    logError("Invalid request method.");
+    $responseData['error'] = 'Invalid request.';
+}
+
+// Return response data as JSON
+echo json_encode($responseData);
+?>
+
+update_performance.php
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+include('./users/db.php');  // Include the database connection
+
+// Main logic
+if (isset($_POST['performance_id'], $_POST['field_name'], $_POST['new_value'])) {
+    $performanceId = $_POST['performance_id'];
+    $fieldName = $_POST['field_name'];
+    $newValue = $_POST['new_value'];
+
+    // Validate and sanitize the date input (assuming it's for the 'score_date' field)
+    if ($fieldName === 'score_date') {
+        $newDate = date_create_from_format('Y-m-d', $newValue);
+        if ($newDate === false) {
+            handleError("Invalid date format.");
+        }
+        $newValue = date_format($newDate, 'Y-m-d');
+    }
+
+    updatePerformance($connection, $performanceId, $fieldName, $newValue);  
+} else {
+    handleError("Invalid data provided.");
+}
+
+/**
+ * Function to update the Performance data.
+ */
+function updatePerformance($connection, $performanceId, $fieldName, $newValue) {
+    // List of allowed field names to ensure security
+    $allowedFields = ['score_date', 'score1', 'score2', 'score3', 'score4', 'score5', 'score6', 'score7', 'score8', 'score9', 'score10'];
+
+    if (!in_array($fieldName, $allowedFields)) {
+        handleError("Invalid field specified.");
+        return;
+    }
+
+    // Prepare SQL statement
+    $sql = "UPDATE Performance SET $fieldName = ? WHERE performance_id = ?";
+    $stmt = $connection->prepare($sql);
+    $stmt->bindParam(1, $newValue);
+    $stmt->bindParam(2, $performanceId);
+
+    // Execute and respond
+    if ($stmt->execute()) {
+        sendResponse(["success" => true]);
+    } else {
+        handleError("Database error: " . $stmt->errorInfo()[2]);
+    }
+}
+
+/**
+ * Function to handle errors.
+ */
+function handleError($errorMessage) {
+    sendResponse(["success" => false, "error" => $errorMessage]);
+}
+
+/**
+ * Function to send a JSON response.
+ */
+function sendResponse($response) {
+    echo json_encode($response);
+    exit;
+}
+?>
+
+delete_performance.php
+<?php
+file_put_contents('post_log.txt', print_r($_POST, true));
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+include('./users/db.php');
+
+$response = ['success' => false];
+
+// Check database connection
+if (!$connection) {
+    $response['message'] = "Connection to the database failed.";
+    echo json_encode($response);
+    exit;
+}
+
+if (isset($_POST['performance_id'])) {
+    $performanceId = $_POST['performance_id'];
+
+    try {
+        // Prepare the DELETE statement
+        $stmt = $connection->prepare("DELETE FROM Performance WHERE performance_id = :performanceId");
+
+        // Check if statement preparation is successful
+        if (!$stmt) {
+            $response['message'] = "Failed to prepare the statement.";
+            echo json_encode($response);
+            exit;
+        }
+
+        // Bind the parameters
+        $stmt->bindParam(':performanceId', $performanceId, PDO::PARAM_INT);
+
+        // Execute the statement
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $response['success'] = true;
+        } else {
+            $response['message'] = "No rows affected. The provided performance_id might not exist in the database.";
+        }
+    } catch (PDOException $e) {
+        $response['message'] = "Database error: " . $e->getMessage();
+    }
+} else {
+    $response['message'] = "Performance ID not provided.";
+}
+echo json_encode($response);
+?>
+
+fetch_data.php
+<?php
+// Database connection and error reporting settings
+include('./users/db.php');
+
+// Error Reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Initialize an empty array for performanceData
+$performanceData = [];
+
+// Check if `student_id` is provided in the URL
+if (isset($_GET['student_id'])) {
+    $studentId = $_GET['student_id'];
+
+    $stmt = $connection->prepare("SELECT * FROM Performance WHERE student_id = ? ORDER BY score_date DESC LIMIT 41");
+    $stmt->execute([$studentId]);
+
+    $performanceData = $stmt->fetchAll();
+}
+if (isset($studentId)) {
+    // Update the column name to SchoolID
+    $stmt = $connection->prepare("SELECT SchoolID FROM Students WHERE student_id = ?");
+    $stmt->execute([$studentId]);
+
+    $result = $stmt->fetch();
+    $schoolID = $result ? $result['SchoolID'] : null;  // Update the column name to SchoolID
+}
+
+if (!empty($performanceData)) {
+    // Update the column name in the WHERE condition to SchoolID
+    $stmt = $connection->prepare("SELECT original_name, custom_name FROM SchoolScoreNames WHERE SchoolID = ?");
+    $stmt->execute([$schoolID]);
+
+    while ($row = $stmt->fetch()) {
+        $scoreNames[$row['original_name']] = $row['custom_name'];
+    }
+}
+
+// Preparing the data for the chart
+$chartDates = [];
+$chartScores = [];
+
+foreach ($performanceData as $record) {
+    $chartDates[] = $record['score_date'];
+    
+    //$totalScore = 0;
+    //for($i = 1; $i <= 10; $i++) {
+        //$totalScore += $record['score'.$i];
+    //}
+    //$avgScore = $totalScore / 10;
+    //$chartScores[] = $avgScore;
+}
+?>
+
+test.php
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Page Title</title>
+</head>
+<body>
+
+    <!-- Add New Student Form -->
+    <form method="post" action="">
+        <label for="new_student_name">New Student Name:</label>
+        <input type="text" id="new_student_name" name="new_student_name">
+        <input type="submit" name="add_new_student" value="Add New Student">
+    </form>
+
+    <?php
+    // Error tracking: Log PHP errors to a file
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
+    function logError($error) {
+        $logFile = 'error_log.txt';
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[$timestamp] $error\n";
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+    }
+
+    try {
+        // Database connection
+        $servername = "localhost";
+        $username = "AndersonSchool";
+        $password = "SpecialEd69$";
+        $dbname = "bFactor-test";
+
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        if ($conn->connect_error) {
+            throw new Exception("Connection failed: " . $conn->connect_error);
+        } else {
+            echo "Connected successfully to the database<br>";
+        }
+
+        // Start session
+        session_start();
+        if (!isset($_SESSION['teacher_id'])) {
+            throw new Exception("Teacher ID not set in session");
+        }
+
+        $teacherId = $_SESSION['teacher_id'];
+        echo "Teacher ID from session: " . $teacherId . "<br>";
+
+        // Add New Student
+if (isset($_POST['add_new_student'])) {
+    $newStudentName = $_POST['new_student_name'];
+
+    if (!empty($newStudentName)) {
+        // Fetch the SchoolID of the current teacher
+        $schoolQuery = $conn->prepare("SELECT SchoolID FROM Teachers WHERE teacher_id = ?");
+        $schoolQuery->bind_param('i', $teacherId);
+        $schoolQuery->execute();
+        $schoolResult = $schoolQuery->get_result();
+        $teacherInfo = $schoolResult->fetch_assoc();
+        $teacherSchoolID = $teacherInfo['SchoolID'];
+
+        // Check if the student with the same name and SchoolID already exists
+        $checkDuplication = $conn->prepare("SELECT student_id FROM Students WHERE name = ? AND SchoolID = ?");
+        $checkDuplication->bind_param('si', $newStudentName, $teacherSchoolID);
+        $checkDuplication->execute();
+        $duplicateStudent = $checkDuplication->get_result()->fetch_assoc();
+
+        if ($duplicateStudent) {
+            echo "Student with the same name already exists.<br>";
+        } else {
+            // Insert the new student with the same SchoolID
+            $stmt = $conn->prepare("INSERT INTO Students (name, SchoolID) VALUES (?, ?)");
+            $stmt->bind_param('si', $newStudentName, $teacherSchoolID);
+            $stmt->execute();
+
+            if ($stmt->error) {
+                throw new Exception("Error adding new student: " . $stmt->error);
+            }
+
+            echo "New student added successfully.<br>";
+        }
+    }
+}
+
+        // Fetch Existing Students for the Teacher based on the School
+        $stmt = $conn->prepare("SELECT s.* FROM Students s INNER JOIN Teachers t ON s.SchoolID = t.SchoolID WHERE t.teacher_id = ?");
+        $stmt->bind_param('i', $teacherId);
+        $stmt->execute();
+
+        if ($stmt->error) {
+            throw new Exception("Error fetching students: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $students = $result->fetch_all(MYSQLI_ASSOC);
+
+        if (empty($students)) {
+            echo "No students found for this teacher.";
+        } else {
+            echo "<h2>Students:</h2>";
+            foreach ($students as $student) {
+                echo "<a href='view_student_data.php?student_id=" . $student['student_id'] . "'>" . $student['name'] . "</a><br>";
+            }
+        }
+
+    } catch (Exception $e) {
+        logError($e->getMessage());
+        echo "An error occurred. Please try again later.";
+    }
+    ?>
+
+</body>
+</html>
